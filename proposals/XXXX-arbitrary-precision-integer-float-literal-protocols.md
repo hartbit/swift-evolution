@@ -48,7 +48,7 @@ public protocol ExpressibleByArbitraryPrecisionIntegerLiteral:
     ///
     /// In this example, the assignment to the `x` constant calls this integer
     /// literal initializer behind the scenes with `sign` as `.plus` and
-	/// `buffer` as the memory [0x0000000000661EFD, 0xF2E3B19F7C045F15].
+    /// `buffer` as the memory [0x0000000000661EFD, 0xF2E3B19F7C045F15].
     ///
     /// - Parameters:
     ///     sign: The sign of the integer value.
