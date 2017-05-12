@@ -13,11 +13,11 @@ This proposal builds on top the new features of [SE-0168 Multi-Line String Liter
 
 In Swift 3, String literals have three pain points:
 
-1. **Strings containing double-quotes** 
-2. **Multi-line strings**
-3. **Long single-line strings**
+* Strings containing double-quotes
+* Multi-line strings
+* Long single-line strings
 
-Proposal [SE-0168](0168-multi-line-string-literals.md) fixed problems 1 and 2 with the same syntax. Unfortunately, while an improvement on Swift 3, several problems remain:
+Proposal [SE-0168](0168-multi-line-string-literals.md) fixed the two first problems with the same syntax. Unfortunately, while an improvement on Swift 3, several problems remain:
 
 * Long single-line strings still require the less than ideal concatenation syntax:
 
@@ -79,7 +79,7 @@ query("
 
 This change allows hard-wrapping long lines in multi-line strings. They also have the added benefit of making trailing white-space at the end of source-code lines explicit.
 
-```
+```swift
 let markdown = """
     # Title
 
@@ -107,6 +107,10 @@ This change will be familiar to C developers and provides a cleaner and more per
 assert(condition, "This is a long assertion message that flows "
     "from one line to the next without requiring the concatenation "
     "operator")
+
+assert(condition, """This is another "single-line" message that """
+    """supports up to two double-quotes (" and "") without any """
+    """escaping""")
 ```
 
 ## Source compatibility
@@ -123,4 +127,20 @@ This feature is purely additive; it has no effect on API resilience.
 
 ## Alternatives considered
 
-TBD
+A different syntax for supporting long single-line strings was discussed where ending delimiters were replaced with the `\` escaping character, mirroring their use in multi-line strings:
+
+```swift
+assert(condition, "This is a long assertion message that flows \
+    "from one line to the next without requiring the concatenation \
+    "operator")
+
+assert(condition, """This is another "single-line" message that \
+    """supports up to two double-quotes (" and "") without any \
+    """escaping""")
+```
+
+That syntax saved two characters per line in strings with `"""` delimiters but had several disadvantages:
+
+* It loses the familiarity with C syntax
+* It introduces an asymmetry between the last line and those above
+* It does not do any actual escaping, introducing developer ambiguity their use in multi-line literals
