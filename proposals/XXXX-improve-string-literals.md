@@ -21,6 +21,8 @@ Proposal [SE-0168](0168-multi-line-string-literals.md) fixed the two first probl
 
 * Long single-line strings still require the less than ideal concatenation syntax:
 
+Some project styles (like the Standard Library) mandate a maximum line length, requiring long single-line strings to be hard-wrapped. This still requires odd solutions:
+
 ```swift
 assert(condition, "This is a long assertion message that requires " +
     "string concatenation when the project style enforces maximum line " +
@@ -61,7 +63,7 @@ The change allows us to express short strings containing double-quotes without r
 print("""{ "success": false, "error": "Wrong parameter" }""")
 ```
 
-As a consequence, multi-line strings are now only defined by the leading and trailing newline and gain support for `"` delimiters. It has the nice advantage of saving a few characters in multi-line strings which are known to never contain double-quotes:
+As a consequence, multi-line strings are now only defined by a newline following the leading delimiter and the whitespace preceeding the trailing delimiter. They gain support for `"` delimiters, which has the nice advantage of saving a few characters in multi-line strings which are known to never contain double-quotes:
 
 ```swift
 print("""
@@ -143,4 +145,4 @@ That syntax saved two characters per line in strings with `"""` delimiters but h
 
 * It loses the familiarity with C syntax
 * It introduces an asymmetry between the last line and those above
-* It does not do any actual escaping, introducing developer ambiguity their use in multi-line literals
+* It does not do any actual escaping, introducing developer ambiguity with their use in multi-line literals
