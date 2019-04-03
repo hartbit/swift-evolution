@@ -1,7 +1,7 @@
 # Static Custom Attributes
 
 * Proposal: [SE-XXXX](https://github.com/apple/swift-evolution/blob/master/proposals/XXXX-static-custom-attributes.md)
-* Authors: [David Hart](https://github.com/hartbit), [Vini Vendramini](http://github.com/vinivendra), [Doug Gregor](https://github.com/DougGregor)
+* Authors: [David Hart](https://github.com/hartbit), [Doug Gregor](https://github.com/DougGregor), [Vini Vendramini](http://github.com/vinivendra)
 * Review Manager: TBD
 * Status: **Pitch only**
 
@@ -32,7 +32,7 @@ var precomputedHash: Int
 
 Unfortunately, because those annotations live in comments:
 
-* they are less discoverable as they can't take advantage of code completetion,
+* they are less discoverable and more error-prone as they can't take advantage of code completetion,
 * they can't be declared or documented in code and,
 * they can't be type-checked by the compiler.
 
@@ -62,18 +62,24 @@ enum MyEnum {
 The custom attributes take the name of their defining type and can be constructed through their initializers. This allows for different construction patterns:
 
 ```swift
+enum Rule {
+    case cyclomaticComplexity
+    case lineCount
+    // ...
+}
+
 @staticAttribute(usage: [.struct, .class, .enumm, .property, .function, .subscript])
 struct Ignore {
     init(rule: String) {}
     init(rules: [String]) {}
 }
 
-@Ignore(rules: ["cyclomatic_complexity", "line_count"])
+@Ignore(rules: [.cyclomaticComplexity, .lineCount])
 func a() {
 	// ...
 }
 
-@Ignore(rule: "line_count")
+@Ignore(rule: .lineCount)
 func b() {
 	// ...
 }
@@ -86,13 +92,14 @@ To recap, static custom attribtues follow the following rules:
 * The `@staticAttribute` attribute can only annotate structs.
 * The `@staticAttribute` takes a single mandatory `usage` argument of `Set<AttributeUsage>` type.
 * The `AttributeUsage` type is an enum with the following cases:
-    * `struct` which represents struct declarations,
+    * `case` which represents enum case declarations,
     * `class` which represents class declarations,
     * `enum` which represents enum declarations,
-    * `property` which represents any stored or computed property declarations,
     * `function` which represents any free, static or instance function declarations,
-    * `subscript` which represents subscript declarations and,
-    * `case` which represents enum case declarations.
+    * `property` which represents stored or computed property declarations in types,
+    * `protocol` which represents protocol declarations,
+    * `struct` which represents struct declarations and,
+    * `subscript` which represents subscript declarations.
 * Custom attributes are named after their declaration type and can be disambiguated by prefixing the attribute name by the name of the module they are defined in followed by a period (for example, `@SwiftLint.Ignore`).
 * Custom attributes can only be constructed through the initializers accessible at the use-site.
 * Using a custom attribute on a declaration not within the set of declarations defined in the attribute's `usage` argument causes a compilation error.
@@ -106,13 +113,14 @@ public struct staticAttribute {
 }
 
 public enum AttributeUsage {
-    case `struct`
+    case `case`
     case `class`
     case `enum`
-    case property
     case function
+    case property
+    case `protocol`
+    case `struct`
     case `subscript`
-    case `case`
 }
 ```
 
