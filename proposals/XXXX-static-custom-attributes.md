@@ -70,8 +70,8 @@ enum Rule {
 
 @staticAttribute(usage: [.struct, .class, .enumm, .property, .function, .subscript])
 struct Ignore {
-    init(rule: String) {}
-    init(rules: [String]) {}
+    init(rule: Rule) {}
+    init(rules: [Rule]) {}
 }
 
 @Ignore(rules: [.cyclomaticComplexity, .lineCount])
