@@ -42,10 +42,10 @@ Furthermore, while static attributes only exist at compile-time, they are a firs
 
 ## Design
 
-This proposal introduces a new compiler-defined attribute called `@staticAttribute` for declaring static custom attributes through `struct`s. It takes a single `usage` argument that defines the type of declarations the attribute an be used on. For example:
+This proposal introduces a new compiler-defined attribute called `@staticAttribute` for declaring static custom attributes through `struct`s. It takes a mandatory `declarations` argument that defines the type of declarations the attribute can annotate and an optional `scopes` arguments that further refines the scope of the allowed declarations. For example:
 
 ```swift
-@staticAttribute(usage: [.struct, .class])
+@staticAttribute(declarations: [.struct, .class], scopes: [.module])
 struct AutoCoding {}
 
 @AutoCoding
@@ -56,6 +56,13 @@ class MyClass: NSObject {
 @AutoCoding // error: the `AutoCoding` attribute can't be used on enums
 enum MyEnum {
     // ...
+}
+
+func foobar() {
+    @AutoCoding // error: the `AutoCoding` attribute can't be used on local declarations
+    struct Inner {
+        // ...
+    }
 }
 ```
 
@@ -68,7 +75,7 @@ enum Rule {
     // ...
 }
 
-@staticAttribute(usage: [.struct, .class, .enumm, .property, .function, .subscript])
+@staticAttribute(declarations: [.struct, .class, .enumm, .property, .function, .subscript])
 struct Ignore {
     init(rule: Rule) {}
     init(rules: [Rule]) {}
@@ -85,61 +92,173 @@ func b() {
 }
 ```
 
-### Rules
+### Definition
 
-To recap, static custom attribtues follow the following rules:
-
-* The `@staticAttribute` attribute can only annotate structs.
-* The `@staticAttribute` takes a single mandatory `usage` argument of `Set<AttributeUsage>` type.
-* The `AttributeUsage` type is an enum with the following cases:
-    * `case` which represents enum case declarations,
-    * `class` which represents class declarations,
-    * `enum` which represents enum declarations,
-    * `function` which represents any free, static or instance function declarations,
-    * `property` which represents stored or computed property declarations in types,
-    * `protocol` which represents protocol declarations,
-    * `struct` which represents struct declarations and,
-    * `subscript` which represents subscript declarations.
-* Custom attributes are named after their declaration type and can be disambiguated by prefixing the attribute name by the name of the module they are defined in followed by a period (for example, `@SwiftLint.Ignore`).
-* Custom attributes can only be constructed through the initializers accessible at the use-site.
-* Using a custom attribute on a declaration not within the set of declarations defined in the attribute's `usage` argument causes a compilation error.
-
-While `@staticAttribute` is a compiler-defined attribute, it can help to visualize it as the following static custom attribute meta-definition:
+The `@staticAttribute` attribute is itself a custom static attribute defined in the Standard Library with the following definition:
 
 ```swift
-@staticAttribute(usage: [.struct])
+/// The meta static attribute to define static attributes.
+@staticAttribute(declarations: [.struct])
 public struct staticAttribute {
-    public init(usage: Set<AttributeUsage>) {}
-}
 
-public enum AttributeUsage {
-    case `case`
-    case `class`
-    case `enum`
-    case function
-    case property
-    case `protocol`
-    case `struct`
-    case `subscript`
+    /// Represents the type of declaration the attribute can be annotated to.
+    public enum Declaration {
+        
+        /// An enumeration type declaration.
+        case `enum`
+
+        /// A structure type declaration.
+        case `struct`
+
+        /// A class type declaration.
+        case `class`
+
+        /// A protocol declaration.
+        case `protocol`
+
+        /// A typealias declaration.
+        case `typealias`
+
+        /// An associated-type declaration.
+        case `associatedtype`
+
+        /// A mutable or immutable variable declaration.
+        case variable
+
+        /// A subscript declaration.
+        case `subscript`
+
+        /// An initializer declaration.
+        case initializer
+
+        /// A deinitializer declaration.
+        case deinitializer
+
+        /// A function declaration.
+        case function
+
+        /// An extension declaration.
+        case `extension`
+
+        /// A module import declaration.
+        case `import`
+
+        /// An enumeration case declaration.
+        case enumCase
+    }
+
+    /// Represents a declaration scope the attribute can be annotated to.
+    public enum Scope: CaseIterable {
+        
+        /// Module scope declaration (top-level scope).
+        case module
+
+        /// Local scope declaration (within a function, method, etc...)
+        case local
+  
+        /// Instance member of a type.
+        case instance
+
+        /// Static member of a type
+        case `static`
+    }
+
+    /// Creates an instance of the `staticAttribute` attribute.
+    public init(declarations: Set<Declaration>, scopes: Set<Scope> = Set(.allCases)) {}
 }
 ```
 
-### Coding Style
+### Structs
 
-The proposal suggests that custom attributes should start by an uppercase letter to differentiate them from compiler-defined attributes and avoid any collision with future compiler attributes.
+As per the definition, `@staticAttribute` can only be attached to structs. They are not supported on enums as those don't have natural initializers that can be used for the creation pattern. They are neither supported on classes as it is too early to predict if those will work with future compile-time evaluation features in Swift.
 
-# Source compatibility
+### Namespacing
+
+Custom attributes are named after their declaration type and can be disambiguated by prefixing the attribute name by the name of the module they are defined in followed by a period (for example, `@SwiftLint.Ignore`).
+
+### Visibility
+
+Custom attributes can only be constructed if they are visible at the use-site and only through the initializers accessible at the use-site. For example, if a `public` custom attribute defines an `internal` and a `public` initializer, it can be constructed using both initializers inside the same module, but only the `public` initializer can be used from other modules.
+
+### Naming
+
+The proposal suggests that only the Standard Library can name custom attributes starting with a lowercae letter, to help differentiate them and avoid collision with user-defined custom attributes.
+
+### From Compiler to Standard Library
+
+Static custom attribtues are powerful enough to allow several compiler-defined attributes to be re-defined inside the Standard Library. Here a few example which could take advantage of them:
+
+```swift
+@staticAttribute(declarations: [.funtion])
+public struct discardableResult {}
+
+@staticAttribute(declarations: [.enum, .struct, .class, .protocol])
+public struct dynamicCallable {}
+
+@staticAttribute(declarations: [.enum, .struct, .class, .protocol])
+public struct dynamicMemberLookup {}
+
+@staticAttribute(declarations: [.import])
+public struct testable {}
+
+@staticAttribute(declarations: [.function, .variable, .subscript, .initializer, .deinitializer])
+public struct inlinable {}
+
+@staticAttribute(declarations: [.function, .variable, .subscript, .initializer, .deinitializer])
+public struct usableFromInline {}
+
+@staticAttribute(declarations: [.function])
+public struct warn_unqualified_access {}
+
+@staticAttribute(declarations: [.function, .variable, .subscript, .initializer])
+public struct nonobjc {}
+
+@staticAttribute(declarations: [.class])
+public struct objcMembers {}
+
+@staticAttribute(declarations: [.variable], scopes: [.instance])
+public struct NSCopying {}
+
+@staticAttribute(declarations: [.class], scopes: [.module])
+public struct NSApplicationMain {}
+
+@staticAttribute(declarations: [.variable, .function], scopes: [.instance])
+public struct NSManaged {}
+
+@staticAttribute(declarations: [.class])
+public struct requires_stored_property_inits {}
+
+@staticAttribute(declarations: [.function], scopes: [.instance])
+public struct IBAction {}
+
+@staticAttribute(declarations: [.class, .extension], scopes: [.module])
+public struct IBDesignable {}
+
+@staticAttribute(declarations: [.variable], scopes: [.instance])
+public struct IBInspectable {}
+
+@staticAttribute(declarations: [.variable], scopes: [.instance])
+public struct IBOutlet {}
+
+@staticAttribute(declarations: [.class], scopes: [.module])
+public struct UIApplicationMain {}
+
+@staticAttribute(declarations: [.variable], scopes: [.instance])
+public struct GKInspectable {}
+```
+
+## Source compatibility
 
 This proposal is purely additive.
 
-# Effect on ABI stability
+## Effect on ABI stability
 
 As static custom attributes only exist at compile-time, they don't affect ABI stability.
 
-# Effect on API resilience
+## Effect on API resilience
 
 As static custom attributes only exist at compile-time, they don't affect ABI resilience.
 
-# Alternatives considered
+## Alternatives considered
 
-A previous version of this proposal suggested introducing a new delcaration syntax for declaring custom attributes. But this solution has the disavantage of being harder to learn, and of having a higher implementation cost.
+A previous version of this proposal suggested introducing a new delcaration syntax for declaring custom attributes. It was abandoned due to a higher implementation and learning cost.
