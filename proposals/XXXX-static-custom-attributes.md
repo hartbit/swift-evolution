@@ -182,7 +182,7 @@ Custom attributes can only be constructed if they are visible at the use-site an
 
 ### Naming
 
-The proposal suggests that only the Standard Library can name custom attributes starting with a lowercae letter, to help differentiate them and avoid collision with user-defined custom attributes.
+The proposal suggests that custom attributes with names starting with an underscore or a lowercase ASCII letter are reserved for the Standard Library, to help differentiate and avoid collision between language provided attributes like `@inlinable` and user-defined custom attributes like `@Ignore`.
 
 ### From Compiler to Standard Library
 
