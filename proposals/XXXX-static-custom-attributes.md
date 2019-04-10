@@ -75,7 +75,7 @@ enum Rule {
     // ...
 }
 
-@staticAttribute(declarations: [.struct, .class, .enumm, .property, .function, .subscript])
+@staticAttribute(declarations: [.struct, .class, .enum, .property, .function, .subscript])
 struct Ignore {
     init(rule: Rule) {}
     init(rules: [Rule]) {}
@@ -125,6 +125,9 @@ public struct staticAttribute {
         /// A mutable or immutable variable declaration.
         case variable
 
+        /// A function parameter declaration.
+        case parameter
+
         /// A subscript declaration.
         case `subscript`
 
@@ -136,6 +139,9 @@ public struct staticAttribute {
 
         /// A function declaration.
         case function
+
+        /// A property accessor declaration.
+        case accessor
 
         /// An extension declaration.
         case `extension`
@@ -150,21 +156,256 @@ public struct staticAttribute {
     /// Represents a declaration scope the attribute can be annotated to.
     public enum Scope: CaseIterable {
         
-        /// Module scope declaration (top-level scope).
-        case module
+        /// Global scope declaration.
+        case global
 
         /// Local scope declaration (within a function, method, etc...)
         case local
+
+        /// Static member of a type.
+        case `static`
   
         /// Instance member of a type.
         case instance
-
-        /// Static member of a type
-        case `static`
     }
 
     /// Creates an instance of the `staticAttribute` attribute.
+    /// - Parameters:
+    ///   - declarations: The declarations the attribute can annotate.
+    ///   - scopes: The scopes of the declarations the attribute can annotate.
     public init(declarations: Set<Declaration>, scopes: Set<Scope> = Set(.allCases)) {}
+}
+```
+
+The configuration of declarations and scopes creates a matrix of different constraints that can be placed on the placement of custom attributes. The following code snippets demonstrates the different combinations:
+
+#### Enum
+
+```swift
+@GlobalEnumAttribute
+enum GlobalEnum {}
+
+func foo() {
+    @LocalEnumAttribute
+    enum LocalEnum {}
+}
+
+struct Foo() {
+    @StaticEnumAttribute
+    enum StaticEnum {}
+}
+```
+
+#### Struct
+
+```swift
+@GlobalStructAttribute
+struct GlobalStruct {}
+
+func foo() {
+    @LocalStrutAttribute
+    struct LocalStruct {}
+}
+
+struct Foo() {
+    @StaticStructAttribute
+    struct StaticStruct {}
+}
+```
+
+#### Class
+
+```swift
+@GlobalClassAttribute
+class GlobalClass {}
+
+func foo() {
+    @LocalClassAttribute
+    class LocalClass {}
+}
+
+struct Foo() {
+    @StaticClassAttribute
+    class StaticClass {}
+}
+```
+
+#### Protocol
+
+```swift
+@GlobalProtocolAttribute
+class GlobalProtocol {}
+
+func foo() {
+    @LocalProtocolAttribute
+    class LocalProtocol {}
+}
+```
+
+#### Typealias
+
+```swift
+@GlobalTypealiasAttribute
+typealias GlobalTypealias = Foo
+
+func foo() {
+    @LocalTypealiasAttribute
+    typealias LocalTypealias = Foo
+}
+
+struct Foo {
+    @StaticTypealiasAttribute
+    typealias StaticTypealias = Foo
+}
+```
+
+#### Associatedtype
+
+```swift
+protocol Foo {
+    @StaticAssociatedtypeAttribute
+    associatedtype StaticAssociatedtype
+}
+```
+
+#### Variable
+
+```swift
+@GlobalVariableAttribute
+let globalVariable = 0
+
+func foo() {
+    @LocalVariableAttribute
+    let localVariable = 0
+}
+
+struct Foo {
+    @StaticVariableAttribute
+    static let staticVariable = 0
+
+    @InstanceVariableAttribute
+    let staticVariable = 0
+}
+```
+
+#### Parameter
+
+```swift
+func foo(@ParameterAttribute parameter: Int) {
+}
+```
+
+#### Subscript
+
+```swift
+struct Foo {
+    // If and once SE-0254 is accepted.
+    @StaticSubscriptAttribute
+    static subscript(index: Int) -> Int {
+        get { ... }
+        set { ... }
+    }
+
+    @InstanceSubscriptAttribute
+    subscript(index: Int) -> Int {
+        get { ... }
+        set { ... }
+    }
+}
+```
+
+#### Initializer
+
+```swift
+struct Foo {
+    @InitializerAttribute
+    init() {
+    }
+}
+```
+
+#### Deinitializer
+
+```swift
+struct Foo {
+    @DeinitializerAttribute
+    deinit() {
+    }
+}
+```
+
+#### Function
+
+```swift
+@GlobalFunctionAttribute
+func globalFunction() {
+}
+
+func foo() {
+    @LocalFunctionAttribute
+    func localFunction() {
+    }
+}
+
+struct Foo {
+    @StaticFunctionAttribute
+    static func staticFunction() {
+    }
+
+    @InstanceFunctionAttribute
+    func instanceFunction() {
+    }
+}
+```
+
+#### Accessor
+
+```swift
+var foo: Int {
+    @GlobalAccessorAttribute
+    get { ... }
+}
+
+func foo() {
+    var foo: Int {
+        @LocalAccessorAttribute
+        get { ... }
+    }
+}
+
+struct Foo {
+    static var foo: Int {
+        @StaticAccessorAttribute
+        get { ... }
+    }
+
+    var foo: Int {
+        @InstanceAccessorAttribute
+        get { ... }
+    }
+}
+```
+
+#### Extension
+
+```swift
+@ExtensionAttribute
+extension Foo {}
+```
+
+#### Import
+
+```swift
+@ImportAttribute
+import Foo
+```
+
+#### EnumCase
+
+```swift
+enum Foo {
+    @EnumCaseAttribute
+    case foo
 }
 ```
 
@@ -186,10 +427,10 @@ The proposal suggests that custom attributes with names starting with an undersc
 
 ### From Compiler to Standard Library
 
-Static custom attribtues are powerful enough to allow several compiler-defined attributes to be re-defined inside the Standard Library. Here a few example which could take advantage of them:
+Static custom attribtues are powerful enough to allow several compiler-defined attributes to be re-defined inside the Standard Library. Here a few examples which could take advantage of them:
 
 ```swift
-@staticAttribute(declarations: [.funtion])
+@staticAttribute(declarations: [.function])
 public struct discardableResult {}
 
 @staticAttribute(declarations: [.enum, .struct, .class, .protocol])
@@ -215,9 +456,6 @@ public struct nonobjc {}
 
 @staticAttribute(declarations: [.class])
 public struct objcMembers {}
-
-@staticAttribute(declarations: [.variable], scopes: [.instance])
-public struct NSCopying {}
 
 @staticAttribute(declarations: [.class], scopes: [.module])
 public struct NSApplicationMain {}
