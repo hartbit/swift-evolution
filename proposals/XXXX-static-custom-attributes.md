@@ -233,13 +233,8 @@ struct Foo() {
 #### Protocol
 
 ```swift
-@GlobalProtocolAttribute
-class GlobalProtocol {}
-
-func foo() {
-    @LocalProtocolAttribute
-    class LocalProtocol {}
-}
+@ProtocolAttribute
+protocol Protocol {}
 ```
 
 #### Typealias
