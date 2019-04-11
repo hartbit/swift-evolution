@@ -45,7 +45,7 @@ Furthermore, while static attributes only exist at compile-time, they are a firs
 This proposal introduces a new compiler-defined attribute called `@staticAttribute` for declaring static custom attributes through `struct`s. It takes a mandatory `declarations` argument that defines the type of declarations the attribute can annotate and an optional `scopes` arguments that further refines the scope of the allowed declarations. For example:
 
 ```swift
-@staticAttribute(declarations: [.struct, .class], scopes: [.module])
+@staticAttribute(declarations: [.struct, .class], scopes: [.global])
 struct AutoCoding {}
 
 @AutoCoding
@@ -103,7 +103,7 @@ public struct staticAttribute {
 
     /// Represents the type of declaration the attribute can be annotated to.
     public enum Declaration {
-        
+
         /// An enumeration type declaration.
         case `enum`
 
@@ -155,7 +155,7 @@ public struct staticAttribute {
 
     /// Represents a declaration scope the attribute can be annotated to.
     public enum Scope: CaseIterable {
-        
+
         /// Global scope declaration.
         case global
 
@@ -164,7 +164,7 @@ public struct staticAttribute {
 
         /// Static member of a type.
         case `static`
-  
+
         /// Instance member of a type.
         case instance
     }
@@ -457,7 +457,7 @@ public struct nonobjc {}
 @staticAttribute(declarations: [.class])
 public struct objcMembers {}
 
-@staticAttribute(declarations: [.class], scopes: [.module])
+@staticAttribute(declarations: [.class], scopes: [.global])
 public struct NSApplicationMain {}
 
 @staticAttribute(declarations: [.variable, .function], scopes: [.instance])
@@ -469,7 +469,7 @@ public struct requires_stored_property_inits {}
 @staticAttribute(declarations: [.function], scopes: [.instance])
 public struct IBAction {}
 
-@staticAttribute(declarations: [.class, .extension], scopes: [.module])
+@staticAttribute(declarations: [.class, .extension], scopes: [.global])
 public struct IBDesignable {}
 
 @staticAttribute(declarations: [.variable], scopes: [.instance])
@@ -478,7 +478,7 @@ public struct IBInspectable {}
 @staticAttribute(declarations: [.variable], scopes: [.instance])
 public struct IBOutlet {}
 
-@staticAttribute(declarations: [.class], scopes: [.module])
+@staticAttribute(declarations: [.class], scopes: [.global])
 public struct UIApplicationMain {}
 
 @staticAttribute(declarations: [.variable], scopes: [.instance])
