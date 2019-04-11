@@ -494,4 +494,4 @@ As static custom attributes only exist at compile-time, they don't affect ABI re
 
 ## Alternatives considered
 
-A previous version of this proposal suggested introducing a new delcaration syntax for declaring custom attributes. It was abandoned due to a higher implementation and learning cost.
+A previous version of this proposal suggested introducing a new declaration syntax for declaring custom attributes. It was abandoned due to a higher implementation and learning cost.
