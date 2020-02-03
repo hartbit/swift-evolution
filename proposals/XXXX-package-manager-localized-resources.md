@@ -51,7 +51,7 @@ The `Package` initializer in the `PackageDescription` API gains a new optional `
 ```swift
 public init(
     name: String,
-    developmentRegion: LanguageTag = nil, // New developmentRegion parameter.
+    developmentRegion: LanguageTag? = nil, // New developmentRegion parameter.
     pkgConfig: String? = nil,
     providers: [SystemPackageProvider]? = nil,
     products: [Product] = [],
